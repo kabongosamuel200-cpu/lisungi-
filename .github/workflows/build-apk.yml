@@ -1,4 +1,4 @@
-name: Build APK with EAS
+name: Build APK
 on:
   push:
     branches: [main]
@@ -8,22 +8,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm install
-      - run: npm install -g eas-cli
-      - name: Create eas.json if missing
+      - name: Fix Expo modules missing version
         run: |
-          if [ ! -f eas.json ]; then
-            echo '{"cli":{"version":">= 5.9.0"},"build":{"preview":{"distribution":"internal","android":{"buildType":"apk"}},"production":{}}}' > eas.json
-            cat eas.json
-          fi
-      - run: npx expo prebuild --platform android --non-interactive --clean || true
+          node -e "
+          const fs=require('fs'), glob=require('fs').readdirSync;
+          const path=require('path');
+          function walk(dir){
+            try{
+              const files=fs.readdirSync(dir);
+              for(const f of files){
+                const p=path.join(dir,f);
+                if(f==='expo-module.config.json'){
+                  try{
+                    let j=JSON.parse(fs.readFileSync(p,'utf8'));
+                    let changed=false;
+                    if(j.platforms && j.platforms.android && j.platforms.android.modules){
+                      j.platforms.android.modules.forEach(m=>{
+                        (m.projects||[]).forEach(pr=>{
+                          if(pr.publication && !pr.publication.version){
+                            pr.publication.version='1.0.0';
+                            changed=true;
+                          }
+                        });
+                      });
+                    }
+                    // also check root android modules
+                    if(j.android && j.android.modules){
+                      j.android.modules.forEach(m=>{
+                        (m.projects||[]).forEach(pr=>{
+                          if(pr.publication && !pr.publication.version){
+                            pr.publication.version='1.0.0';
+                            changed=true;
+                          }
+                        });
+                      });
+                    }
+                    if(changed){ fs.writeFileSync(p, JSON.stringify(j,null,2)); console.log('Fixed',p); }
+                  }catch(e){}
+                }
+                if(fs.statSync(p).isDirectory() && !p.includes('.git') && !p.includes('android') && p.split('/').length<6){
+                  walk(p);
+                }
+              }
+            }catch(e){}
+          }
+          walk('node_modules');
+          "
+      - run: npx expo prebuild --platform android --non-interactive --clean
       - run: |
           cd android
           chmod +x gradlew
