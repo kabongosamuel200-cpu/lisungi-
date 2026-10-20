@@ -1,9 +1,9 @@
 name: Construire APK Lisungi
 on:
   push:
-    branches: [ principal, main ]
+    branches: [ main ]
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,11 +14,17 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - run: npm install
-      - run: npx expo prebuild --platform android --no-install
-      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
-      - uses: actions/upload-artifact@v4
+      - name: Installer dependances
+        run: npm install
+      - name: Generer Android
+        run: npx expo prebuild --platform android --no-install
+      - name: Construire APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+      - name: Uploader APK
+        uses: actions/upload-artifact@v4
         with:
           name: lisungi-apk
           path: android/app/build/outputs/apk/release/app-release.apk
