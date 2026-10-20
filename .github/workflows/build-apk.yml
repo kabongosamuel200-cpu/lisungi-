@@ -19,7 +19,7 @@ jobs:
       - run: npx expo prebuild --platform android --non-interactive --clean
       - name: Fix Gradle version
         run: |
-          sed -i 's/gradle-8.14/gradle-8.10.1/' android/gradle/wrapper/gradle-wrapper.properties
+          sed -i 's|distributionUrl.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.10.2-all.zip|' android/gradle/wrapper/gradle-wrapper.properties
           cat android/gradle/wrapper/gradle-wrapper.properties
       - run: |
           cd android
