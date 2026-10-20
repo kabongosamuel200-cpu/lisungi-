@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "lisungi",
-    "slug": "snack-f7b9ff13-c7f4-48cb-9982-0b36e3b2f93b",
+    "slug": "lisungi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,6 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.kabongosamuel200cpu.lisungi",
       "edgeToEdgeEnabled": true
     },
     "web": {
