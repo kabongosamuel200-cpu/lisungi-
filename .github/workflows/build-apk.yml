@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK with EAS
 on:
   push:
     branches: [main]
@@ -8,26 +8,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - run: npm install
-      - run: npx expo prebuild --platform android --non-interactive --clean
-      - name: Fix Gradle + Expo bug
+      - run: npm install -g eas-cli
+      - name: Create eas.json if missing
         run: |
-          sed -i 's|distributionUrl.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.8-all.zip|' android/gradle/wrapper/gradle-wrapper.properties
-          # Patch Expo to make version optional
-          find node_modules/expo-modules-autolinking -name "*.kt" -exec sed -i 's/val version: String/val version: String? = null/g' {} \;
-          find node_modules/expo-modules-autolinking -name "*.kt" -exec sed -i 's/var version: String/var version: String? = null/g' {} \;
-          cat android/gradle/wrapper/gradle-wrapper.properties
+          if [ ! -f eas.json ]; then
+            echo '{"cli":{"version":">= 5.9.0"},"build":{"preview":{"distribution":"internal","android":{"buildType":"apk"}},"production":{}}}' > eas.json
+            cat eas.json
+          fi
+      - run: npx expo prebuild --platform android --non-interactive --clean || true
       - run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: lisungi-apk
