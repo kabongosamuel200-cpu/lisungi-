@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK - Expo SDK 51 Stable
 on:
   push:
     branches: [main]
@@ -15,59 +15,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - name: Fix Expo modules missing version
+      - name: Install dependencies
         run: |
-          node -e "
-          const fs=require('fs'), glob=require('fs').readdirSync;
-          const path=require('path');
-          function walk(dir){
-            try{
-              const files=fs.readdirSync(dir);
-              for(const f of files){
-                const p=path.join(dir,f);
-                if(f==='expo-module.config.json'){
-                  try{
-                    let j=JSON.parse(fs.readFileSync(p,'utf8'));
-                    let changed=false;
-                    if(j.platforms && j.platforms.android && j.platforms.android.modules){
-                      j.platforms.android.modules.forEach(m=>{
-                        (m.projects||[]).forEach(pr=>{
-                          if(pr.publication && !pr.publication.version){
-                            pr.publication.version='1.0.0';
-                            changed=true;
-                          }
-                        });
-                      });
-                    }
-                    // also check root android modules
-                    if(j.android && j.android.modules){
-                      j.android.modules.forEach(m=>{
-                        (m.projects||[]).forEach(pr=>{
-                          if(pr.publication && !pr.publication.version){
-                            pr.publication.version='1.0.0';
-                            changed=true;
-                          }
-                        });
-                      });
-                    }
-                    if(changed){ fs.writeFileSync(p, JSON.stringify(j,null,2)); console.log('Fixed',p); }
-                  }catch(e){}
-                }
-                if(fs.statSync(p).isDirectory() && !p.includes('.git') && !p.includes('android') && p.split('/').length<6){
-                  walk(p);
-                }
-              }
-            }catch(e){}
-          }
-          walk('node_modules');
-          "
-      - run: npx expo prebuild --platform android --non-interactive --clean
-      - run: |
+          npm install
+          npx expo install expo@~51.0.28 -- --save
+          npx expo install --fix
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --clean --non-interactive
+      - name: Force Gradle 8.8 for SDK 51
+        run: |
+          sed -i 's|distributionUrl.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.8-all.zip|' android/gradle/wrapper/gradle-wrapper.properties
+          cat android/gradle/wrapper/gradle-wrapper.properties
+      - name: Build APK
+        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: lisungi-apk
+          name: lisungi-apk-sdk51
           path: android/app/build/outputs/apk/release/app-release.apk
