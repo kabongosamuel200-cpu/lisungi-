@@ -1,8 +1,5 @@
-name: Build APK - FINAL FIX V2
-on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+name: Build APK - SDK53 STABLE
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,77 +12,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install
-        run: |
-          rm -rf node_modules package-lock.json android
-          npm install
-
-      - name: PATCH Publication.version - real fix
-        run: |
-          node << 'EOF'
-          const fs=require('fs'), path=require('path');
-          let count=0;
-          function scan(dir){
-            if(!fs.existsSync(dir)) return;
-            for(const name of fs.readdirSync(dir)){
-              const full=path.join(dir,name);
-              try{
-                const stat=fs.statSync(full);
-                if(stat.isFile() && name==='expo-module.config.json'){
-                  const txt=fs.readFileSync(full,'utf8');
-                  const j=JSON.parse(txt);
-                  let changed=false;
-                  const fixPub=(pub)=>{
-                    if(pub && typeof pub==='object' && !pub.version){
-                      pub.version="1.0.0"; changed=true;
-                    }
-                  };
-                  if(j.android){
-                    if(Array.isArray(j.android.projects)){
-                      j.android.projects.forEach(p=>fixPub(p.publication));
-                    }
-                    fixPub(j.android.publication);
-                    if(j.android.packageName && !j.android.publication){
-                      j.android.publication={version:"1.0.0"}; changed=true;
-                    }
-                  }
-                  // fix root level too
-                  fixPub(j.publication);
-                  if(changed){
-                    fs.writeFileSync(full, JSON.stringify(j,null,2));
-                    console.log("FIXED:", full);
-                    count++;
-                  }
-                } else if(stat.isDirectory() && !full.includes('.bin') && name!=='build'){
-                  scan(full);
-                }
-              }catch(e){}
-            }
-          }
-          scan('node_modules');
-          console.log(`TOTAL FIXED: ${count} files`);
-          // Fallback brute force for react-native-vector-icons
-          const rnvPath='node_modules/react-native-vector-icons/android/build.gradle';
-          if(fs.existsSync(rnvPath)){
-            let c=fs.readFileSync(rnvPath,'utf8');
-            if(!c.includes('publication')){
-              console.log("vector-icons has no publication, will be ignored by autolinking");
-            }
-          }
-          EOF
-
-      - name: Prebuild
-        run: npx expo prebuild --platform android --clean --non-interactive
-
-      - name: Build APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace --info | tail -n 200
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - run: npm install
+      - run: npx expo prebuild --platform android --clean --non-interactive
+      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
         with:
           name: lisungi-apk
           path: android/app/build/outputs/apk/release/app-release.apk
