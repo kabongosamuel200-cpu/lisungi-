@@ -19,30 +19,20 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json android
-          npm install
+      - name: Install
+        run: npm install --legacy-peer-deps
 
-      - name: Prebuild Android
+      - name: Prebuild
         run: npx expo prebuild --platform android --clean --non-interactive
 
-      - name: Build APK Release
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
-
-      - name: Find APK location
-        run: |
-          find android/app/build -name "*.apk" -type f
+          ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: lisungi-apk
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/apk/debug/*.apk
-            android/app/build/outputs/**/*.apk
-          if-no-files-found: warn
+          path: android/app/build/outputs/apk/release/app-release.apk
