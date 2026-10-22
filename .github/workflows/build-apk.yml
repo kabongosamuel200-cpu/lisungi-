@@ -1,4 +1,4 @@
-name: Build APK - FINAL FIX
+name: Build APK - FINAL FIX V2
 on:
   workflow_dispatch:
   push:
@@ -21,48 +21,58 @@ jobs:
           rm -rf node_modules package-lock.json android
           npm install
 
-      - name: PATCH all expo modules - fix Publication.version
+      - name: PATCH Publication.version - real fix
         run: |
           node << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
-          const glob = require('fs');
-          function walk(dir){
+          const fs=require('fs'), path=require('path');
+          let count=0;
+          function scan(dir){
             if(!fs.existsSync(dir)) return;
-            const files = fs.readdirSync(dir);
-            for(const f of files){
-              const full = path.join(dir,f);
+            for(const name of fs.readdirSync(dir)){
+              const full=path.join(dir,name);
               try{
-                const stat = fs.statSync(full);
-                if(stat.isDirectory()){
-                  if(f==='expo-module.config.json'){
-                    const content = fs.readFileSync(full,'utf8');
-                    let json = JSON.parse(content);
-                    let changed=false;
-                    if(json.android && json.android.projects){
-                      for(const p of json.android.projects){
-                        if(p.publication && !p.publication.version){
-                          p.publication.version="1.0.0";
-                          changed=true;
-                        }
-                      }
+                const stat=fs.statSync(full);
+                if(stat.isFile() && name==='expo-module.config.json'){
+                  const txt=fs.readFileSync(full,'utf8');
+                  const j=JSON.parse(txt);
+                  let changed=false;
+                  const fixPub=(pub)=>{
+                    if(pub && typeof pub==='object' && !pub.version){
+                      pub.version="1.0.0"; changed=true;
                     }
-                    if(json.android && json.android.publication && !json.android.publication.version){
-                      json.android.publication.version="1.0.0";
-                      changed=true;
+                  };
+                  if(j.android){
+                    if(Array.isArray(j.android.projects)){
+                      j.android.projects.forEach(p=>fixPub(p.publication));
                     }
-                    if(changed){
-                      fs.writeFileSync(full, JSON.stringify(json,null,2));
-                      console.log("PATCHED "+full);
+                    fixPub(j.android.publication);
+                    if(j.android.packageName && !j.android.publication){
+                      j.android.publication={version:"1.0.0"}; changed=true;
                     }
                   }
-                  walk(full);
+                  // fix root level too
+                  fixPub(j.publication);
+                  if(changed){
+                    fs.writeFileSync(full, JSON.stringify(j,null,2));
+                    console.log("FIXED:", full);
+                    count++;
+                  }
+                } else if(stat.isDirectory() && !full.includes('.bin') && name!=='build'){
+                  scan(full);
                 }
               }catch(e){}
             }
           }
-          walk('node_modules');
-          console.log("PATCH DONE");
+          scan('node_modules');
+          console.log(`TOTAL FIXED: ${count} files`);
+          // Fallback brute force for react-native-vector-icons
+          const rnvPath='node_modules/react-native-vector-icons/android/build.gradle';
+          if(fs.existsSync(rnvPath)){
+            let c=fs.readFileSync(rnvPath,'utf8');
+            if(!c.includes('publication')){
+              console.log("vector-icons has no publication, will be ignored by autolinking");
+            }
+          }
           EOF
 
       - name: Prebuild
@@ -72,10 +82,10 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleRelease --stacktrace --info | tail -n 200
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: lisungi-apk-final
+          name: lisungi-apk
           path: android/app/build/outputs/apk/release/app-release.apk
