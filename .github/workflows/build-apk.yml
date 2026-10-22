@@ -1,8 +1,8 @@
-name: Build APK - Expo SDK 51 Stable
+name: Build APK - FIX SDK54
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,24 +15,41 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
+
+      - name: Install CORRECT dependencies for SDK 54
         run: |
+          rm -rf node_modules package-lock.json android
+          npm install react-native-paper@^5.14.5 --save
           npm install
-          npx expo install expo@~51.0.28 -- --save
           npx expo install --fix
-      - name: Prebuild Android
-        run: npx expo prebuild --platform android --clean --non-interactive
-      - name: Force Gradle 8.8 for SDK 51
+
+      - name: Patch the bug Publication.version (real file)
         run: |
-          sed -i 's|distributionUrl.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.8-all.zip|' android/gradle/wrapper/gradle-wrapper.properties
-          cat android/gradle/wrapper/gradle-wrapper.properties
+          echo "Searching for Publication.kt..."
+          FILE=$(find node_modules/expo-modules-autolinking -type f -name "*.kt" | xargs grep -l "class Publication" | head -n 1)
+          echo "Found: $FILE"
+          if [ -f "$FILE" ]; then
+            sed -i 's/val version: String/val version: String = "1.0.0"/g' "$FILE"
+            sed -i 's/var version: String/var version: String = "1.0.0"/g' "$FILE"
+            cat "$FILE"
+          else
+            echo "Patching all kt files..."
+            find node_modules/expo-modules-autolinking -name "*.kt" -exec sed -i 's/val version: String/val version: String = "1.0.0"/g' {} \;
+          fi
+          # second safety: inject version in all expo-module.config.json
+          find node_modules -name "expo-module.config.json" -exec sh -c 'grep -q "\"publication\"" "$1" && sed -i "s/\"publication\": {/\"publication\": { \"version\": \"1.0.0\", /g" "$1" || true' _ {} \;
+
+      - name: Prebuild
+        run: npx expo prebuild --platform android --clean --non-interactive
+
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --stacktrace
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: lisungi-apk-sdk51
+          name: lisungi-apk-sdk54-fixed
           path: android/app/build/outputs/apk/release/app-release.apk
