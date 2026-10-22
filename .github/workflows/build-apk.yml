@@ -1,4 +1,4 @@
-name: Build APK - FIX SDK54
+name: Build APK - FINAL FIX
 on:
   workflow_dispatch:
   push:
@@ -16,28 +16,54 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install CORRECT dependencies for SDK 54
+      - name: Install
         run: |
           rm -rf node_modules package-lock.json android
-          npm install react-native-paper@^5.14.5 --save
           npm install
-          npx expo install --fix
 
-      - name: Patch the bug Publication.version (real file)
+      - name: PATCH all expo modules - fix Publication.version
         run: |
-          echo "Searching for Publication.kt..."
-          FILE=$(find node_modules/expo-modules-autolinking -type f -name "*.kt" | xargs grep -l "class Publication" | head -n 1)
-          echo "Found: $FILE"
-          if [ -f "$FILE" ]; then
-            sed -i 's/val version: String/val version: String = "1.0.0"/g' "$FILE"
-            sed -i 's/var version: String/var version: String = "1.0.0"/g' "$FILE"
-            cat "$FILE"
-          else
-            echo "Patching all kt files..."
-            find node_modules/expo-modules-autolinking -name "*.kt" -exec sed -i 's/val version: String/val version: String = "1.0.0"/g' {} \;
-          fi
-          # second safety: inject version in all expo-module.config.json
-          find node_modules -name "expo-module.config.json" -exec sh -c 'grep -q "\"publication\"" "$1" && sed -i "s/\"publication\": {/\"publication\": { \"version\": \"1.0.0\", /g" "$1" || true' _ {} \;
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const glob = require('fs');
+          function walk(dir){
+            if(!fs.existsSync(dir)) return;
+            const files = fs.readdirSync(dir);
+            for(const f of files){
+              const full = path.join(dir,f);
+              try{
+                const stat = fs.statSync(full);
+                if(stat.isDirectory()){
+                  if(f==='expo-module.config.json'){
+                    const content = fs.readFileSync(full,'utf8');
+                    let json = JSON.parse(content);
+                    let changed=false;
+                    if(json.android && json.android.projects){
+                      for(const p of json.android.projects){
+                        if(p.publication && !p.publication.version){
+                          p.publication.version="1.0.0";
+                          changed=true;
+                        }
+                      }
+                    }
+                    if(json.android && json.android.publication && !json.android.publication.version){
+                      json.android.publication.version="1.0.0";
+                      changed=true;
+                    }
+                    if(changed){
+                      fs.writeFileSync(full, JSON.stringify(json,null,2));
+                      console.log("PATCHED "+full);
+                    }
+                  }
+                  walk(full);
+                }
+              }catch(e){}
+            }
+          }
+          walk('node_modules');
+          console.log("PATCH DONE");
+          EOF
 
       - name: Prebuild
         run: npx expo prebuild --platform android --clean --non-interactive
@@ -51,5 +77,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: lisungi-apk-sdk54-fixed
+          name: lisungi-apk-final
           path: android/app/build/outputs/apk/release/app-release.apk
