@@ -21,10 +21,28 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.kabongosamuel200cpu.lisungi",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
+      ],
+      "useNextNotificationsApi": true
     },
     "web": {
       "favicon": "./favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./adaptive-icon.png",
+          "color": "#ff69b4",
+          "sounds": [],
+          "mode": "production"
+        }
+      ]
+    ]
   }
 }
