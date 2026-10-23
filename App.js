@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, StatusBar, Linking, SafeAreaView, TextInput, Modal, Share } from 'react-native';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const CLINICS = [
   {name:"Hôpital Saint-Joseph", area:"Limete 7e rue", phone:"tel:+243829999999", spec:"Gynéco - Sénologie lun/jeu - Dr Mbuyi"},
@@ -23,9 +32,9 @@ const FAQ = [
   {q:"Douleur avant règles ?", a:"Normal, seins gonflés. Si douleur un seul côté qui ne part pas, note-le."},
 ];
 const VIDEOS = [
-  {title:"1 min - Miroir", dur:"0:45", desc:"Comment bien se regarder"},
-  {title:"2 min - Palpation douche", dur:"1:30", desc:"Geste circulaire OMS"},
-  {title:"1 min - Allongée", dur:"1:00", desc:"Coussin sous épaule"},
+  {title:"1 min - Miroir", dur:"0:45", desc:"Comment bien se regarder", url:"https://www.youtube.com/watch?v=5r8yN1b2p0E", steps:"1. Devant miroir, bras le long du corps\n2. Mains sur hanches, pousse\n3. Bras levés\n4. Cherche asymétrie, rougeur, peau d'orange"},
+  {title:"2 min - Palpation douche", dur:"1:30", desc:"Geste circulaire OMS", url:"https://www.youtube.com/watch?v=ihK1Z3VAcgM", steps:"1. 3 doigts, savonnés\n2. Pression légère, moyenne, forte\n3. Cercles de l'extérieur vers le mamelon\n4. N'oublie pas l'aisselle"},
+  {title:"1 min - Allongée", dur:"1:00", desc:"Coussin sous épaule", url:"https://www.youtube.com/watch?v=5r8yN1b2p0E", steps:"1. Allongée, coussin sous épaule droite\n2. Bras droit derrière tête\n3. Main gauche palpe sein droit\n4. Change de côté"},
 ];
 
 export default function App(){
@@ -38,6 +47,20 @@ export default function App(){
   const [customText, setCustomText] = useState('');
   const [riskDone, setRiskDone] = useState(false);
   const [privateMode, setPrivateMode] = useState(false);
+  const [videoModal, setVideoModal] = useState(null);
+
+  useEffect(() => {
+    async function setupNotif(){
+      const { status } = await Notifications.requestPermissionsAsync();
+      if(status !== 'granted') return;
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await Notifications.scheduleNotificationAsync({
+        content:{ title:"Lisungi 🌸", body:"Sala contrôle na yo ? C'est le 1er du mois !", sound:true },
+        trigger:{ type:'calendar', day:1, hour:9, minute:0, repeats:true }
+      });
+    }
+    setupNotif();
+  }, []);
 
   const openModal = () => { setShowModal(true); setSelectedOpt(lang==='fr'?'Rien de nouveau':'Eloko te'); setCustomText(''); };
   const saveCheck = () => {
@@ -47,8 +70,7 @@ export default function App(){
     setShowModal(false); setScreen('journal');
   };
   const nextReminder = () => {
-    if(checks.length===0) return lang==='fr'?"Fais ton 1er aujourd'hui":"Sala ya liboso lelo";
-    const d = new Date(); d.setMonth(d.getMonth()+1); return d.toLocaleDateString('fr-FR');
+    return "1er du mois - 9h";
   };
 
   if(screen==='onboard'){
@@ -84,24 +106,38 @@ export default function App(){
         </View></View>
       </Modal>
 
+      <Modal visible={!!videoModal} transparent animationType="slide">
+        <View style={styles.modalBack}><View style={[styles.modalBox, {minHeight:300}]}>
+          <Text style={styles.modalTitle}>{videoModal?.title}</Text>
+          <Text style={styles.modalQ}>{videoModal?.desc}</Text>
+          <View style={{backgroundColor:'#FFF0F3', padding:12, borderRadius:10, marginTop:10}}>
+            <Text style={{fontSize:12, lineHeight:18}}>{videoModal?.steps}</Text>
+          </View>
+          <TouchableOpacity style={styles.ctaPro} onPress={()=>{ if(videoModal?.url) Linking.openURL(videoModal.url); }}>
+            <Text style={styles.ctaProText}>▶️ Voir vidéo YouTube</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancel} onPress={()=>setVideoModal(null)}><Text style={styles.cancelTxt}>Fermer</Text></TouchableOpacity>
+        </View></View>
+      </Modal>
+
       {screen==='home' && (
         <ScrollView contentContainerStyle={styles.body}>
           <View style={styles.statsRow}><View style={styles.statCard}><Text style={styles.statNum}>{checks.length}</Text><Text style={styles.statLab}>Contrôles</Text></View><View style={styles.statCard}><Text style={styles.statNum}>{checks.length>0?checks.length*30+'j':'0j'}</Text><Text style={styles.statLab}>Streak</Text></View><View style={styles.statCard}><Text style={styles.statNum}>🔔</Text><Text style={styles.statLab}>{nextReminder()}</Text></View></View>
-          <View style={styles.heroPro}><Text style={styles.heroTitle}>{lang==='fr'?'Lisungi, ton alliée de 2 min':'Lisungi, moninga na yo'}</Text><Text style={styles.heroSub}>{lang==='fr'?"Recommandé OMS. Pas un diagnostic.":"OMS elobi malamu. Eza diagnostic te."}</Text><TouchableOpacity style={styles.ctaPro} onPress={openModal}><Text style={styles.ctaProText}>{lang==='fr'?'Faire mon contrôle du mois ✓':'Sala contrôle ya sanza ✓'}</Text></TouchableOpacity><TouchableOpacity style={styles.outlinePro} onPress={()=>setScreen('tuto')}><Text style={styles.outlineProText}>{lang==='fr'?'Apprendre le geste →':'Yekola geste →'}</Text></TouchableOpacity><TouchableOpacity style={styles.sosBtn} onPress={()=>Linking.openURL('tel:+243829999999')}><Text style={styles.sosTxt}>🚨 {lang==='fr'?'Doute ? Appeler hôpital':'Doute ? Benga hôpital'}</Text></TouchableOpacity></View>
+          <View style={styles.heroPro}><Text style={styles.heroTitle}>{lang==='fr'?'Lisungi, ton alliée de 2 min':'Lisungi, moninga na yo'}</Text><Text style={styles.heroSub}>{lang==='fr'?"Recommandé OMS. Pas un diagnostic. Rappel le 1er à 9h":"OMS elobi malamu. Rappel 1er à 9h"}</Text><TouchableOpacity style={styles.ctaPro} onPress={openModal}><Text style={styles.ctaProText}>{lang==='fr'?'Faire mon contrôle du mois ✓':'Sala contrôle ya sanza ✓'}</Text></TouchableOpacity><TouchableOpacity style={styles.outlinePro} onPress={()=>setScreen('tuto')}><Text style={styles.outlineProText}>{lang==='fr'?'Apprendre le geste →':'Yekola geste →'}</Text></TouchableOpacity><TouchableOpacity style={styles.sosBtn} onPress={()=>Linking.openURL('tel:+243829999999')}><Text style={styles.sosTxt}>🚨 {lang==='fr'?'Doute ? Appeler hôpital':'Doute ? Benga hôpital'}</Text></TouchableOpacity></View>
           <Text style={styles.h2}>{lang==='fr'?'Elles recommandent Lisungi':'Bango ba recommend'}</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop:8}}>{TESTIMONIALS.map((t,i)=><View key={i} style={styles.testiCard}><Text style={styles.testiTxt}>"{t.txt}"</Text><Text style={styles.testiName}>{t.name}</Text></View>)}</ScrollView>
-          <TouchableOpacity style={styles.shareBtn} onPress={()=>Share.share({message:'Lisungi - Mon alliée 2 min Kinshasa https://snack.expo.dev/?sdkVersion=54.0.0'})}><Text style={styles.shareTxt}>💌 {lang==='fr'?'Recommander à une sœur':'Tinda na moninga'}</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.shareBtn} onPress={()=>Share.share({message:'Lisungi - Mon alliée 2 min Kinshasa'})}><Text style={styles.shareTxt}>💌 {lang==='fr'?'Recommander à une sœur':'Tinda na moninga'}</Text></TouchableOpacity>
         </ScrollView>
       )}
 
       {screen==='tuto' && (
         <ScrollView contentContainerStyle={styles.body}>
           <Text style={styles.h1}>Guide OMS - 5 étapes</Text>
-          <View style={styles.stepCard}><Text style={styles.stepT}>Quand ?</Text><Text style={styles.stepD}>1x/mois, 2-3j après règles. Date fixe si plus de règles.</Text></View>
+          <View style={styles.stepCard}><Text style={styles.stepT}>Quand ?</Text><Text style={styles.stepD}>1x/mois, 2-3j après règles. Rappel Lisungi : 1er du mois à 9h.</Text></View>
           <View style={styles.stepCard}><Text style={styles.stepT}>1. Miroir</Text><Text style={styles.stepD}>Bras le long, mains hanches, bras levés. Asymétrie, peau d'orange, rougeur.</Text></View>
           <View style={styles.stepCard}><Text style={styles.stepT}>2. Debout sous la douche</Text><Text style={styles.stepD}>3 doigts, pression légère/moyenne/forte. Cercles extérieur→centre + aisselle.</Text></View>
           <View style={styles.stepCard}><Text style={styles.stepT}>3. Allongée</Text><Text style={styles.stepD}>Coussin sous épaule, palpe sein opposé.</Text></View>
           <View style={styles.stepCard}><Text style={styles.stepT}>4. Que faire si doute ?</Text><Text style={styles.stepD}>80% bénin MAIS vérifier sous 7 jours.</Text></View>
-          <View style={[styles.stepCard,{backgroundColor:'#FCE4EC'}]}><Text style={styles.stepT}>5. Note & rappelle</Text><Text style={styles.stepD}>Note dans Journal. Rappel auto mois prochain. Si changement rapide &lt;48h consulte.</Text></View>
+          <View style={[styles.stepCard,{backgroundColor:'#FCE4EC'}]}><Text style={styles.stepT}>5. Note & rappelle</Text><Text style={styles.stepD}>Note dans Journal. Rappel auto le 1er à 9h.</Text></View>
         </ScrollView>
       )}
 
@@ -118,7 +154,7 @@ export default function App(){
       {screen==='learn' && (
         <ScrollView contentContainerStyle={styles.body}>
           <Text style={styles.h1}>Apprendre • Conseils • FAQ</Text>
-          <Text style={styles.h2}>Vidéos 3 min</Text>{VIDEOS.map((v,i)=><View key={i} style={styles.videoCard}><View style={styles.videoThumb}><Text>▶️</Text></View><View style={{flex:1, marginLeft:10}}><Text style={styles.videoTitle}>{v.title} • {v.dur}</Text><Text style={styles.videoDesc}>{v.desc}</Text></View><View style={styles.playBtn}><Text style={styles.playTxt}>Voir</Text></View></View>)}
+          <Text style={styles.h2}>Vidéos 3 min - Clique pour voir</Text>{VIDEOS.map((v,i)=><View key={i} style={styles.videoCard}><View style={styles.videoThumb}><Text>▶️</Text></View><View style={{flex:1, marginLeft:10}}><Text style={styles.videoTitle}>{v.title} • {v.dur}</Text><Text style={styles.videoDesc}>{v.desc}</Text></View><TouchableOpacity onPress={()=>setVideoModal(v)} style={styles.playBtn}><Text style={styles.playTxt}>Voir</Text></TouchableOpacity></View>)}
           <Text style={styles.h2}>Questionnaire risque</Text>{!riskDone ? <View style={styles.riskBox}><Text style={styles.riskT}>Antécédent familial direct ?</Text><View style={styles.riskRow}><TouchableOpacity onPress={()=>setRiskDone(true)} style={styles.riskBtn}><Text>Oui</Text></TouchableOpacity><TouchableOpacity onPress={()=>setRiskDone(true)} style={styles.riskBtn}><Text>Non</Text></TouchableOpacity></View><TouchableOpacity style={styles.ctaPro} onPress={()=>setRiskDone(true)}><Text style={styles.ctaProText}>Voir mon profil →</Text></TouchableOpacity></View> : <View style={styles.riskBoxDone}><Text style={styles.riskT}>Profil : Risque standard - contrôle mensuel suffit (non diagnostic)</Text></View>}
           <Text style={styles.h2}>Vrai / Faux</Text><View style={styles.learnCard}><Text style={styles.learnQ}>Cancer seulement après 50 ans ?</Text><Text style={styles.learnA}>FAUX - possible dès 20-30 ans</Text></View><View style={styles.learnCard}><Text style={styles.learnQ}>Si pas de douleur, rien ?</Text><Text style={styles.learnA}>FAUX - début souvent indolore</Text></View>
           <Text style={styles.h2}>Conseils OMS 🥗</Text>{TIPS.map((tip,i)=><View key={i} style={styles.tipCard}><Text style={styles.tipIcon}>{tip.icon}</Text><View style={{flex:1, marginLeft:10}}><Text style={styles.tipT}>{tip.t}</Text><Text style={styles.tipD}>{tip.d}</Text></View></View>)}
