@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, StatusBar, Linking, SafeAreaView, TextInput, Modal, Share } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -48,6 +49,23 @@ export default function App(){
   const [riskDone, setRiskDone] = useState(false);
   const [privateMode, setPrivateMode] = useState(false);
   const [videoModal, setVideoModal] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem('lisungi_checks');
+        if(saved) setChecks(JSON.parse(saved));
+      } catch(e){}
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await AsyncStorage.setItem('lisungi_checks', JSON.stringify(checks));
+      } catch(e){}
+    })();
+  }, [checks]);
 
   useEffect(() => {
     async function setupNotif(){
