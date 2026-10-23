@@ -32,9 +32,9 @@ const FAQ = [
   {q:"Douleur avant règles ?", a:"Normal, seins gonflés. Si douleur un seul côté qui ne part pas, note-le."},
 ];
 const VIDEOS = [
-  {title:"1 min - Miroir", dur:"0:45", desc:"Comment bien se regarder", url:"https://www.youtube.com/watch?v=5r8yN1b2p0E", steps:"1. Devant miroir, bras le long du corps\n2. Mains sur hanches, pousse\n3. Bras levés\n4. Cherche asymétrie, rougeur, peau d'orange"},
-  {title:"2 min - Palpation douche", dur:"1:30", desc:"Geste circulaire OMS", url:"https://www.youtube.com/watch?v=ihK1Z3VAcgM", steps:"1. 3 doigts, savonnés\n2. Pression légère, moyenne, forte\n3. Cercles de l'extérieur vers le mamelon\n4. N'oublie pas l'aisselle"},
-  {title:"1 min - Allongée", dur:"1:00", desc:"Coussin sous épaule", url:"https://www.youtube.com/watch?v=5r8yN1b2p0E", steps:"1. Allongée, coussin sous épaule droite\n2. Bras droit derrière tête\n3. Main gauche palpe sein droit\n4. Change de côté"},
+  {title:"1 min - Miroir", dur:"0:45", desc:"Comment bien se regarder - Ligue contre le cancer", url:"https://www.youtube.com/watch?v=FZvckWXec6w", steps:"1. Devant miroir, bras le long du corps\n2. Mains sur hanches, pousse\n3. Bras levés\n4. Cherche asymétrie, rougeur, peau d'orange"},
+  {title:"2 min - Palpation douche", dur:"1:30", desc:"Geste circulaire OMS", url:"https://www.youtube.com/watch?v=FZvckWXec6w", steps:"1. 3 doigts, savonnés\n2. Pression légère, moyenne, forte\n3. Cercles de l'extérieur vers le mamelon\n4. N'oublie pas l'aisselle"},
+  {title:"1 min - Allongée", dur:"1:00", desc:"Méthode complète avec aisselle", url:"https://www.youtube.com/watch?v=lkqI3aVkhLs", steps:"1. Allongée, coussin sous épaule droite\n2. Bras droit derrière tête\n3. Main gauche palpe sein droit en cercles\n4. Vérifie aisselle et mamelon"},
 ];
 
 export default function App(){
@@ -69,9 +69,7 @@ export default function App(){
     setChecks([{date: now, note, opt: selectedOpt}, ...checks]);
     setShowModal(false); setScreen('journal');
   };
-  const nextReminder = () => {
-    return "1er du mois - 9h";
-  };
+  const nextReminder = () => { return "1er du mois - 9h"; };
 
   if(screen==='onboard'){
     const slides = [
@@ -107,7 +105,7 @@ export default function App(){
       </Modal>
 
       <Modal visible={!!videoModal} transparent animationType="slide">
-        <View style={styles.modalBack}><View style={[styles.modalBox, {minHeight:300}]}>
+        <View style={styles.modalBack}><View style={[styles.modalBox, {minHeight:320}]}>
           <Text style={styles.modalTitle}>{videoModal?.title}</Text>
           <Text style={styles.modalQ}>{videoModal?.desc}</Text>
           <View style={{backgroundColor:'#FFF0F3', padding:12, borderRadius:10, marginTop:10}}>
