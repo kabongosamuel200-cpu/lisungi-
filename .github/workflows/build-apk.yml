@@ -8,25 +8,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+
       - name: Install deps
         run: npm install --legacy-peer-deps
+
       - name: Clean prebuild
         run: npx expo prebuild --platform android --clean
-      - name: Fix publication version bug
+
+      - name: Build APK Release
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace || true
-          echo "Retrying with fix..."
-          sed -i "s/def publicationVersion.*/def publicationVersion = '1.0.0'/" settings.gradle || true
           ./gradlew assembleRelease
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
