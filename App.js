@@ -12,10 +12,10 @@ Notifications.setNotificationHandler({
 });
 
 const CLINICS = [
-  {name:"Hôpital Saint-Joseph", area:"Limete 7e rue", phone:"tel:+243829999999", spec:"Gynéco - Sénologie lun/jeu - Dr Mbuyi"},
-  {name:"Centre Monkole", area:"Mont Ngafula", phone:"tel:+243829999998", spec:"Imagerie mammaire - Mammo accessible"},
-  {name:"Cliniques Ngaliema / CMBA", area:"Gombe", phone:"tel:+243829999997", spec:"Consultation femmes 8h-16h"},
-  {name:"Hôpital Roi Baudouin", area:"Masina", phone:"tel:+243829999996", spec:"Dépistage gratuit 1er mardi du mois"},
+  {name:"Hôpital Saint-Joseph", area:"Limete 7e rue", phone:"tel:+243854878767", spec:"0854 878 767 - Gynéco - 4,1★ (23 avis)"},
+  {name:"Centre Hospitalier Monkole", area:"Mont Ngafula", phone:"tel:+243890000012", spec:"0890 000 012 / 0896 903 835 - Standard"},
+  {name:"Cliniques Ngaliema", area:"Gombe - 8480 Av. Papa Ileo", phone:"tel:+243810044920", spec:"0810 044 920 / 0815 293 268 - 3,7★"},
+  {name:"Hôpital Roi Baudouin 1er", area:"Masina", phone:"tel:+243901511979", spec:"0901 511 979 - 3,9★ - Urgences"},
 ];
 const TESTIMONIALS = [
   {name:"Aminata, 28 ans, Kinshasa", txt:"Je fais mon contrôle chaque 1er du mois. Lisungi me rappelle."},
@@ -35,7 +35,7 @@ const FAQ = [
 const VIDEOS = [
   {title:"1 min - Miroir", dur:"0:45", desc:"Comment bien se regarder - Ligue contre le cancer", url:"https://www.youtube.com/watch?v=FZvckWXec6w", steps:"1. Devant miroir, bras le long du corps\n2. Mains sur hanches, pousse\n3. Bras levés\n4. Cherche asymétrie, rougeur, peau d'orange"},
   {title:"2 min - Palpation douche", dur:"1:30", desc:"Geste circulaire OMS", url:"https://www.youtube.com/watch?v=FZvckWXec6w", steps:"1. 3 doigts, savonnés\n2. Pression légère, moyenne, forte\n3. Cercles de l'extérieur vers le mamelon\n4. N'oublie pas l'aisselle"},
-  {title:"1 min - Allongée", dur:"1:00", desc:"Méthode complète avec aisselle", url:"https://www.youtube.com/watch?v=lkqI3aVkhLs", steps:"1. Allongée, coussin sous épaule droite\n2. Bras droit derrière tête\n3. Main gauche palpe sein droit en cercles\n4. Vérifie aisselle et mamelon"},
+  {title:"1 min - Allongée", dur:"1:00", desc:"Méthode complète avec aisselle", url:"https://www.youtube.com/watch?v=FZvckWXec6w", steps:"1. Allongée, coussin sous épaule droite\n2. Bras droit derrière tête\n3. Main gauche palpe sein droit en cercles\n4. Vérifie aisselle et mamelon"},
 ];
 
 export default function App(){
@@ -139,7 +139,7 @@ export default function App(){
       {screen==='home' && (
         <ScrollView contentContainerStyle={styles.body}>
           <View style={styles.statsRow}><View style={styles.statCard}><Text style={styles.statNum}>{checks.length}</Text><Text style={styles.statLab}>Contrôles</Text></View><View style={styles.statCard}><Text style={styles.statNum}>{checks.length>0?checks.length*30+'j':'0j'}</Text><Text style={styles.statLab}>Streak</Text></View><View style={styles.statCard}><Text style={styles.statNum}>🔔</Text><Text style={styles.statLab}>{nextReminder()}</Text></View></View>
-          <View style={styles.heroPro}><Text style={styles.heroTitle}>{lang==='fr'?'Lisungi, ton alliée de 2 min':'Lisungi, moninga na yo'}</Text><Text style={styles.heroSub}>{lang==='fr'?"Recommandé OMS. Pas un diagnostic. Rappel le 1er à 9h":"OMS elobi malamu. Rappel 1er à 9h"}</Text><TouchableOpacity style={styles.ctaPro} onPress={openModal}><Text style={styles.ctaProText}>{lang==='fr'?'Faire mon contrôle du mois ✓':'Sala contrôle ya sanza ✓'}</Text></TouchableOpacity><TouchableOpacity style={styles.outlinePro} onPress={()=>setScreen('tuto')}><Text style={styles.outlineProText}>{lang==='fr'?'Apprendre le geste →':'Yekola geste →'}</Text></TouchableOpacity><TouchableOpacity style={styles.sosBtn} onPress={()=>Linking.openURL('tel:+243829999999')}><Text style={styles.sosTxt}>🚨 {lang==='fr'?'Doute ? Appeler hôpital':'Doute ? Benga hôpital'}</Text></TouchableOpacity></View>
+          <View style={styles.heroPro}><Text style={styles.heroTitle}>{lang==='fr'?'Lisungi, ton alliée de 2 min':'Lisungi, moninga na yo'}</Text><Text style={styles.heroSub}>{lang==='fr'?"Recommandé OMS. Pas un diagnostic. Rappel le 1er à 9h":"OMS elobi malamu. Rappel 1er à 9h"}</Text><TouchableOpacity style={styles.ctaPro} onPress={openModal}><Text style={styles.ctaProText}>{lang==='fr'?'Faire mon contrôle du mois ✓':'Sala contrôle ya sanza ✓'}</Text></TouchableOpacity><TouchableOpacity style={styles.outlinePro} onPress={()=>setScreen('tuto')}><Text style={styles.outlineProText}>{lang==='fr'?'Apprendre le geste →':'Yekola geste →'}</Text></TouchableOpacity><TouchableOpacity style={styles.sosBtn} onPress={()=>Linking.openURL('tel:+243854878767')}><Text style={styles.sosTxt}>🚨 {lang==='fr'?'Doute ? Appeler Saint-Joseph':'Doute ? Benga hôpital'}</Text></TouchableOpacity></View>
           <Text style={styles.h2}>{lang==='fr'?'Elles recommandent Lisungi':'Bango ba recommend'}</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop:8}}>{TESTIMONIALS.map((t,i)=><View key={i} style={styles.testiCard}><Text style={styles.testiTxt}>"{t.txt}"</Text><Text style={styles.testiName}>{t.name}</Text></View>)}</ScrollView>
           <TouchableOpacity style={styles.shareBtn} onPress={()=>Share.share({message:'Lisungi - Mon alliée 2 min Kinshasa'})}><Text style={styles.shareTxt}>💌 {lang==='fr'?'Recommander à une sœur':'Tinda na moninga'}</Text></TouchableOpacity>
         </ScrollView>
@@ -182,7 +182,7 @@ export default function App(){
         <ScrollView contentContainerStyle={styles.body}>
           <Text style={styles.h1}>{lang==='fr'?'Où consulter à Kinshasa ?':'Wapi na Kin ?'}</Text><View style={styles.cardAlert}><Text style={styles.cardAlertD}>Urgence : écoulement sanglant, boule qui grossit vite, peau qui change &lt;1 mois =&gt; consulte &lt;48h.</Text></View>
           {CLINICS.map((c,i)=><View key={i} style={styles.clinicCard}><View style={{flex:1}}><Text style={styles.clinicName}>{c.name}</Text><Text style={styles.clinicArea}>{c.area}</Text><Text style={styles.clinicSpec}>{c.spec}</Text></View><TouchableOpacity onPress={()=>Linking.openURL(c.phone)} style={styles.callBtn}><Text style={styles.callTxt}>Appeler</Text></TouchableOpacity></View>)}
-          <TouchableOpacity style={styles.whatsBtn} onPress={()=>Linking.openURL('https://wa.me/243829999999')}><Text style={styles.whatsTxt}>💬 WhatsApp Hôpital</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.whatsBtn} onPress={()=>Linking.openURL('https://wa.me/243890000012')}><Text style={styles.whatsTxt}>💬 WhatsApp Monkole</Text></TouchableOpacity>
         </ScrollView>
       )}
 
